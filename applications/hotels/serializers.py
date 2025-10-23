@@ -31,3 +31,19 @@ class HotelSerializer(serializers.ModelSerializer):
             'image',
             'is_active',
         ]
+        
+    def validate_star_rating(self, value):
+        """Validar estrellas entre 1 y 5"""
+        if value < 1 or value > 5:
+            raise serializers.ValidationError(
+                "La clasificación debe estar entre 1 y 5 estrellas"
+            )
+        return value
+    
+    def validate_price_per_night(self, value):
+        """Validar precio positivo"""
+        if value <= 0:
+            raise serializers.ValidationError(
+                "El precio debe ser mayor a 0"
+            )
+        return value

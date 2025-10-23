@@ -1,10 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
-from django.core.validators import MinValueValidator, MaxValueValidator
-
 
 class Category(models.Model):
-    """Modelo para categorías de paquetes turísticos"""
     name = models.CharField(max_length=100, verbose_name="Nombre")
     description = models.TextField(blank=True, verbose_name="Descripción")
     icon = models.CharField(max_length=50, blank=True, verbose_name="Icono")
@@ -16,20 +13,11 @@ class Category(models.Model):
         verbose_name_plural = "Categorías"
         db_table = "categorias_paquetes"
 
-    def __str__(self) -> str:
-        return str(self.name)
+    def __str__(self):
+        return self.name
 
 
 class Package(models.Model):
-    """Modelo para paquetes turísticos"""
-    INCLUDE_CHOICES = [
-        ('flight', 'Vuelo'),
-        ('hotel', 'Hotel'),
-        ('meals', 'Comidas'),
-        ('transport', 'Transporte'),
-        ('guide', 'Guía'),
-    ]
-
     name = models.CharField(max_length=200, verbose_name="Nombre del paquete")
     slug = models.SlugField(max_length=200, unique=True, blank=True, verbose_name="Slug")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='packages', verbose_name="Categoría")
@@ -41,10 +29,18 @@ class Package(models.Model):
     price_adult = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio adulto")
     price_child = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio niño")
     max_people = models.PositiveIntegerField(verbose_name="Máximo de personas")
-    min_people = models.PositiveIntegerField(default=1, verbose_name="Mínimo de personas")  # type: ignore
-    includes = models.JSONField(default=list, verbose_name="Incluye")
+    min_people = models.PositiveIntegerField(default=1, verbose_name="Mínimo de personas")
+
+    # ✅ Inclusiones como BooleanFields
+    includes_flight = models.BooleanField(default=False, verbose_name="Incluye Vuelo")
+    includes_hotel = models.BooleanField(default=False, verbose_name="Incluye Hotel")
+    includes_meals = models.BooleanField(default=False, verbose_name="Incluye Comidas")
+    includes_transport = models.BooleanField(default=False, verbose_name="Incluye Transporte")
+    includes_guide = models.BooleanField(default=False, verbose_name="Incluye Guía")
+
     image = models.ImageField(upload_to='packages/', blank=True, null=True, verbose_name="Imagen")
-    is_featured = models.BooleanField(default=False, verbose_name="Destacado")  # type: ignore
+    is_featured = models.BooleanField(default=False, verbose_name="Destacado")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
     available_from = models.DateField(verbose_name="Disponible desde")
     available_until = models.DateField(verbose_name="Disponible hasta")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -56,13 +52,14 @@ class Package(models.Model):
         db_table = "paquetes_turisticos"
         ordering = ['-created_at']
 
-    def __str__(self) -> str:
-        return str(self.name)
+    def __str__(self):
+        return self.name
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
 
 
 class Itinerary(models.Model):
@@ -88,24 +85,23 @@ class Itinerary(models.Model):
 
 
 class Wishlist(models.Model):
+    """Lista de deseos de los usuarios"""
     user = models.ForeignKey(
         'authentication.User',
         on_delete=models.CASCADE,
         related_name='wishlist_items',
         verbose_name='Usuario'
     )
-    
     package = models.ForeignKey(
-        'Package',
+        Package,
         on_delete=models.CASCADE,
         related_name='wishlisted_by',
         verbose_name='Paquete'
     )
-    
-    added_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Agregado')
-    
+    added_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de agregado')
+
     class Meta:
-        db_table = 'lista_deseos'
+        db_table = 'wishlist_packages'  # <- nombre único para evitar conflicto
         verbose_name = 'Lista de Deseos'
         verbose_name_plural = 'Lista de Deseos'
         ordering = ['-added_at']
@@ -114,6 +110,6 @@ class Wishlist(models.Model):
             models.Index(fields=['user', '-added_at']),
             models.Index(fields=['package']),
         ]
-    
+
     def __str__(self):
         return f"{self.user.username} - {self.package.name}"

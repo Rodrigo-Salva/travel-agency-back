@@ -30,7 +30,7 @@ class Booking(models.Model):
 	]
 
 	booking_number = models.CharField(max_length=64, unique=True)
-	customer_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
+	customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
 	package_id = models.ForeignKey('packages.Package', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
 	travel_date = models.DateField(null=True, blank=True)
 	return_date = models.DateField(null=True, blank=True)

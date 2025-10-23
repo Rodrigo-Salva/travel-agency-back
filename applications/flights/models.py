@@ -1,5 +1,6 @@
 # applications/flights/models.py
 from django.db import models
+from django.utils import timezone 
 
 class Flight(models.Model):
     airline_name = models.CharField(max_length=100)
@@ -15,6 +16,7 @@ class Flight(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     available_seats = models.PositiveIntegerField()
     baggage_allowance = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)  # <-- agregado
 
     class Meta:
         db_table = 'vuelos'

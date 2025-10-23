@@ -1,133 +1,168 @@
 from rest_framework import serializers
-from .models import Category, Package, Itinerary, Wishlist
-from applications.destinations.models import Destination
+from .models import Category, Package, Itinerary
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    """Serializer para categorías de paquetes"""
-    packages_count = serializers.SerializerMethodField()
-
+    """
+    Serializer para categorías
+    """
+    
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description', 'icon', 'packages_count', 'created_at', 'updated_at']
-
-    def get_packages_count(self, obj):
-        return obj.packages.count()
+        fields = ['id', 'name', 'description', 'icon']
 
 
 class ItinerarySerializer(serializers.ModelSerializer):
-    """Serializer para itinerarios"""
+    """
+    Serializer para itinerarios
+    """
     
     class Meta:
         model = Itinerary
-        fields = ['id', 'day_number', 'title', 'description', 'activities', 'meals_included', 'created_at', 'updated_at']
+        fields = [
+            'id',
+            'day_number',
+            'title',
+            'description',
+            'activities',
+            'meals_included'
+        ]
 
 
 class PackageListSerializer(serializers.ModelSerializer):
-    """Serializer para lista de paquetes (campos resumidos)"""
-    category_name = serializers.CharField(source='category.name', read_only=True)
-    destination_name = serializers.CharField(source='destination.name', read_only=True)
-    destination_city = serializers.CharField(source='destination.city', read_only=True)
-    destination_country = serializers.CharField(source='destination.country', read_only=True)
-    image_url = serializers.SerializerMethodField()
-
+    """
+    Serializer para listado de paquetes (información resumida)
+    """
+    
+    destination_name = serializers.CharField(
+        source='destination.name',
+        read_only=True
+    )
+    
+    category_name = serializers.CharField(
+        source='category.name',
+        read_only=True
+    )
+    
     class Meta:
         model = Package
         fields = [
-            'id', 'name', 'slug', 'category_name', 'destination_name', 
-            'destination_city', 'destination_country', 'short_description',
-            'duration_days', 'duration_nights', 'price_adult', 'price_child',
-            'max_people', 'min_people', 'includes', 'image_url', 'is_featured',
-            'available_from', 'available_until', 'created_at'
+            'id',
+            'name',
+            'slug',
+            'category_name',
+            'destination_name',
+            'short_description',
+            'duration_days',
+            'duration_nights',
+            'price_adult',
+            'price_child',
+            'image',
+            'is_featured',
+            'created_at'
         ]
-
-    def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
 
 
 class PackageDetailSerializer(serializers.ModelSerializer):
-    """Serializer para detalle de paquetes (con itinerario anidado)"""
+    """
+    Serializer detallado de paquete con itinerario completo
+    """
+    
+    destination = serializers.StringRelatedField()
     category = CategorySerializer(read_only=True)
-    destination = serializers.SerializerMethodField()
-    itineraries = ItinerarySerializer(many=True, read_only=True)
-    image_url = serializers.SerializerMethodField()
-
+    itinerary = ItinerarySerializer(many=True, read_only=True)
+    
+    # Campos calculados
+    total_duration = serializers.SerializerMethodField()
+    
     class Meta:
         model = Package
         fields = [
-            'id', 'name', 'slug', 'category', 'destination', 'description',
-            'short_description', 'duration_days', 'duration_nights',
-            'price_adult', 'price_child', 'max_people', 'min_people',
-            'includes', 'image_url', 'is_featured', 'available_from',
-            'available_until', 'itineraries', 'created_at', 'updated_at'
-        ]
-
-    def get_destination(self, obj):
-        return {
-            'id': obj.destination.id,
-            'name': obj.destination.name,
-            'city': obj.destination.city,
-            'country': obj.destination.country,
-            'description': obj.destination.description,
-            'short_description': obj.destination.short_description,
-        }
-
-    def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
-
-class WishlistSerializer(serializers.ModelSerializer):
-    package_name = serializers.CharField(source='package.name', read_only=True)
-    package_description = serializers.CharField(source='package.description', read_only=True)
-    
-    class Meta:
-        model = Wishlist
-        fields = [
             'id',
-            'user',
-            'package',
-            'package_name',
-            'package_description',
-            'added_at',
+            'name',
+            'slug',
+            'category',
+            'destination',
+            'description',
+            'short_description',
+            'duration_days',
+            'duration_nights',
+            'total_duration',
+            'price_adult',
+            'price_child',
+            'max_people',
+            'min_people',
+            'includes_flight',
+            'includes_hotel',
+            'includes_meals',
+            'includes_transport',
+            'includes_guide',
+            'image',
+            'is_active',
+            'is_featured',
+            'available_from',
+            'available_until',
+            'itinerary',
+            'created_at',
+            'updated_at'
         ]
-        read_only_fields = ['id', 'user', 'added_at']
     
-    def validate(self, data):
-        request = self.context.get('request')
-        package = data.get('package')
-        
-        if request and request.user and package:
-            if Wishlist.objects.filter(user=request.user, package=package).exists():
-                raise serializers.ValidationError(
-                    "Este paquete ya está en tu lista de deseos"
-                )
-        
-        return data
+    def get_total_duration(self, obj):
+        """Calcular duración total como string"""
+        return f"{obj.duration_days} días / {obj.duration_nights} noches"
 
 
-class WishlistCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Wishlist
-        fields = ['package']
-
-
-class WishlistListSerializer(serializers.ModelSerializer):
-    package_name = serializers.CharField(source='package.name', read_only=True)
+class PackageCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer para crear paquetes
+    """
     
     class Meta:
-        model = Wishlist
+        model = Package
         fields = [
-            'id',
-            'package',
-            'package_name',
-            'added_at',
+            'name',
+            'slug',
+            'category',
+            'destination',
+            'description',
+            'short_description',
+            'duration_days',
+            'duration_nights',
+            'price_adult',
+            'price_child',
+            'max_people',
+            'min_people',
+            'includes_flight',
+            'includes_hotel',
+            'includes_meals',
+            'includes_transport',
+            'includes_guide',
+            'image',
+            'is_featured',
+            'available_from',
+            'available_until'
         ]
+    
+    def validate(self, attrs):
+        """Validaciones personalizadas"""
+        if attrs.get('duration_days', 0) < 1:
+            raise serializers.ValidationError({
+                "duration_days": "La duración debe ser al menos 1 día"
+            })
+        
+        if attrs.get('duration_nights', 0) < 0:
+            raise serializers.ValidationError({
+                "duration_nights": "Las noches no pueden ser negativas"
+            })
+        
+        if attrs.get('price_adult', 0) <= 0:
+            raise serializers.ValidationError({
+                "price_adult": "El precio debe ser mayor a 0"
+            })
+        
+        if attrs.get('max_people', 0) < attrs.get('min_people', 1):
+            raise serializers.ValidationError({
+                "max_people": "El máximo debe ser mayor o igual al mínimo"
+            })
+        
+        return attrs

@@ -1,10 +1,9 @@
 from django.apps import AppConfig
 
-
 class InquiriesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'applications.inquiries'
-    verbose_name = 'Consultas'
-    
+
     def ready(self):
-        pass
+        # Importa las señales solo aquí, después de que la app esté lista
+        from . import signals

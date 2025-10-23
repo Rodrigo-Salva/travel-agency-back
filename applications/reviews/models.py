@@ -84,10 +84,10 @@ class Review(models.Model):
     def average_rating(self):
         ratings = [
             self.overall_rating,
-            self.accommodation_rating or 0,
-            self.transport_rating or 0,
-            self.guide_rating or 0,
-            self.value_rating or 0
+            self.accommodation_rating,
+            self.transport_rating,
+            self.guide_rating,
+            self.value_rating
         ]
-        valid_ratings = [r for r in ratings if r > 0]
+        valid_ratings = [r for r in ratings if r is not None and r > 0]
         return sum(valid_ratings) / len(valid_ratings) if valid_ratings else 0
