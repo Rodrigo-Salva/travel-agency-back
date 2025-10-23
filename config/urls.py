@@ -18,7 +18,7 @@ urlpatterns = [
     #path('api/v1/packages/', include('apps.packages.urls')),
     #path('api/v1/hotels/', include('apps.hotels.urls')),
     #path('api/v1/flights/', include('apps.flights.urls')),
-    #path('api/v1/activities/', include('apps.activities.urls')),
+    path('api/v1/activities/', include('applications.activities.urls')),
     #path('api/v1/bookings/', include('apps.bookings.urls')),
     #path('api/v1/reviews/', include('apps.reviews.urls')),
     #path('api/v1/promotions/', include('apps.promotions.urls')),
