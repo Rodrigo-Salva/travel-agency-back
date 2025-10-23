@@ -11,7 +11,7 @@ admin.site.index_title = "Panel de Administración"
 urlpatterns = [
     # Django Admin (solo para administradores)
     path('admin/', admin.site.urls),
-    
+    path('api/v1/destinations/', include('applications.destinations.urls')),
     # API v1
     #path('api/v1/auth/', include('apps.authentication.urls')),
     #path('api/v1/destinations/', include('apps.destinations.urls')),
