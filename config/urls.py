@@ -19,6 +19,7 @@ urlpatterns = [
     #path('api/v1/reviews/', include('apps.reviews.urls')),
     #path('api/v1/promotions/', include('apps.promotions.urls')),
     #path('api/v1/inquiries/', include('apps.inquiries.urls')),
+    path('api/v1/bookings/', include('applications.bookings.urls')),
 ]
 
 # Media files en desarrollo
