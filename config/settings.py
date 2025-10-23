@@ -124,4 +124,4 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Solo en desarrollo
 
 # User Model personalizado
-#AUTH_USER_MODEL = 'authentication.User'
+AUTH_USER_MODEL = 'authentication.User'
