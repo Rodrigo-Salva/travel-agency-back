@@ -78,4 +78,4 @@ class Inquiry(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.subject} - {self.name}"
+        return f"{self.subject} - {self.name} ({self.get_status_display()})"

@@ -2,8 +2,10 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
+from datetime import date, timedelta
 
-from .models import Wishlist, Package
+from applications.packages.models import Wishlist, Package, Category
+from applications.destinations.models import Destination
 
 User = get_user_model()
 
@@ -15,9 +17,31 @@ class WishlistModelTest(TestCase):
             email='test@example.com',
             password='testpass123'
         )
+        
+        self.category = Category.objects.create(name='Test Category')
+        self.destination = Destination.objects.create(
+            name='Test Destination',
+            country='Test Country',
+            description='Test Description',
+            short_description='Short description',
+            latitude=0.0,
+            longitude=0.0
+        )
+        
         self.package = Package.objects.create(
             name='Paquete Test',
-            description='Descripción de prueba'
+            description='Descripción de prueba',
+            short_description='Descripción corta',
+            category=self.category,
+            destination=self.destination,
+            duration_days=5,
+            duration_nights=4,
+            price_adult=1000.00,
+            price_child=500.00,
+            max_people=10,
+            min_people=2,
+            available_from=date.today(),
+            available_until=date.today() + timedelta(days=365)
         )
     
     def test_wishlist_creation(self):
@@ -42,9 +66,31 @@ class WishlistAPITest(APITestCase):
             email='test@example.com',
             password='testpass123'
         )
+        
+        self.category = Category.objects.create(name='Test Category')
+        self.destination = Destination.objects.create(
+            name='Test Destination',
+            country='Test Country',
+            description='Test Description',
+            short_description='Short description',
+            latitude=0.0,
+            longitude=0.0
+        )
+        
         self.package = Package.objects.create(
             name='Paquete Test',
-            description='Descripción de prueba'
+            description='Descripción de prueba',
+            short_description='Descripción corta',
+            category=self.category,
+            destination=self.destination,
+            duration_days=5,
+            duration_nights=4,
+            price_adult=1000.00,
+            price_child=500.00,
+            max_people=10,
+            min_people=2,
+            available_from=date.today(),
+            available_until=date.today() + timedelta(days=365)
         )
     
     def test_list_wishlist_authenticated(self):
@@ -61,7 +107,7 @@ class WishlistAPITest(APITestCase):
     
     def test_add_to_wishlist(self):
         self.client.force_authenticate(user=self.user)
-        data = {'package': self.package.id}
+        data = {'package_id': self.package.id}
         response = self.client.post('/api/packages/wishlist/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
     

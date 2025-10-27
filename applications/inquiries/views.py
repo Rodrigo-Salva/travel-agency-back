@@ -1,13 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-from core.permissions import IsAdminUser
-from .models import Inquiry
-from .serializers import InquirySerializer
+from rest_framework.permissions import AllowAny, IsAdminUser
+from applications.inquiries.models import Inquiry
+from applications.inquiries.serializers import InquirySerializer
 
 
 class InquiryViewSet(viewsets.ModelViewSet):
-    """ViewSet para consultas"""
     queryset = Inquiry.objects.all()
     serializer_class = InquirySerializer
     

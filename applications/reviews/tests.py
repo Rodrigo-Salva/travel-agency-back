@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
-from .models import Review
+from applications.reviews.models import Review
 
 User = get_user_model()
 

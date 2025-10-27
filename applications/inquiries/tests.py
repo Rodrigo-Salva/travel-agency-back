@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
-from .models import Inquiry
+from applications.inquiries.models import Inquiry
 
 User = get_user_model()
 
@@ -31,33 +31,32 @@ class InquiryModelTest(TestCase):
 class InquiryAPITest(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.staff_user = User.objects.create_user(
+        self.staff_user = User.objects.create_superuser(
             username='staff',
             email='staff@example.com',
-            password='staffpass123',
-            is_staff=True
+            password='staffpass123'
         )
     
-    def test_create_inquiry_anonymous(self):
-        data = {
-            'name': 'María González',
-            'email': 'maria@example.com',
-            'phone': '987654321',
-            'subject': 'Pregunta sobre paquetes',
-            'message': 'Quisiera información sobre paquetes a Europa'
-        }
-        
-        response = self.client.post('/api/inquiries/inquiries/', data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+def test_create_inquiry_anonymous(self):
+    data = {
+        'name': 'María González',
+        'email': 'maria@example.com',
+        'phone': '987654321',
+        'subject': 'Pregunta sobre paquetes',
+        'message': 'Quisiera información sobre paquetes a Europa'
+    }
     
-    def test_list_inquiries_as_staff(self):
-        self.client.force_authenticate(user=self.staff_user)
-        response = self.client.get('/api/inquiries/inquiries/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
-    def test_list_inquiries_anonymous(self):
-        response = self.client.get('/api/inquiries/inquiries/')
-        self.assertIn(
-            response.status_code,
-            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
-        )
+    response = self.client.post('/api/inquiries/', data)
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+def test_list_inquiries_as_staff(self):
+    self.client.force_authenticate(user=self.staff_user)
+    response = self.client.get('/api/inquiries/')
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+def test_list_inquiries_anonymous(self):
+    response = self.client.get('/api/inquiries/')
+    self.assertIn(
+        response.status_code,
+        [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+    )

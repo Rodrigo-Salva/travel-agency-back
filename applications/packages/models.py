@@ -31,7 +31,6 @@ class Package(models.Model):
     max_people = models.PositiveIntegerField(verbose_name="Máximo de personas")
     min_people = models.PositiveIntegerField(default=1, verbose_name="Mínimo de personas")
 
-    # ✅ Inclusiones como BooleanFields
     includes_flight = models.BooleanField(default=False, verbose_name="Incluye Vuelo")
     includes_hotel = models.BooleanField(default=False, verbose_name="Incluye Hotel")
     includes_meals = models.BooleanField(default=False, verbose_name="Incluye Comidas")
@@ -101,7 +100,7 @@ class Wishlist(models.Model):
     added_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de agregado')
 
     class Meta:
-        db_table = 'wishlist_packages'  # <- nombre único para evitar conflicto
+        db_table = 'wishlist_packages'  
         verbose_name = 'Lista de Deseos'
         verbose_name_plural = 'Lista de Deseos'
         ordering = ['-added_at']

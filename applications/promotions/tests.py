@@ -5,8 +5,7 @@ from rest_framework import status
 from datetime import date, timedelta
 from decimal import Decimal
 
-from .models import Coupon
-
+from applications.promotions.models import Coupon
 
 class CouponModelTest(TestCase):
     def setUp(self):

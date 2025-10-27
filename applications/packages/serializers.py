@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Package, Itinerary
+from .models import Category, Package, Itinerary, Wishlist
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -166,3 +166,20 @@ class PackageCreateSerializer(serializers.ModelSerializer):
             })
         
         return attrs
+
+
+class WishlistSerializer(serializers.ModelSerializer):
+    """
+    Serializer para wishlist con información del paquete
+    """
+    package = PackageListSerializer(read_only=True)
+    package_id = serializers.PrimaryKeyRelatedField(
+        queryset=Package.objects.all(),
+        source='package',
+        write_only=True
+    )
+    
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'package', 'package_id', 'added_at']
+        read_only_fields = ['added_at']
