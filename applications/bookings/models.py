@@ -31,7 +31,7 @@ class Booking(models.Model):
 
 	booking_number = models.CharField(max_length=64, unique=True)
 	customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
-	package_id = models.ForeignKey('packages.Package', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
+	package = models.ForeignKey('packages.Package', on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
 	travel_date = models.DateField(null=True, blank=True)
 	return_date = models.DateField(null=True, blank=True)
 	num_adults = models.PositiveIntegerField(default=1)
@@ -53,7 +53,7 @@ class Booking(models.Model):
 		ordering = ('-booking_date',)
 
 	def __str__(self):
-		return f"Booking {self.booking_number} ({self.customer_id})"
+		return f"Booking {self.booking_number} ({self.customer.email})"
 
 
 class Passenger(models.Model):
@@ -67,7 +67,7 @@ class Passenger(models.Model):
 		(TYPE_INFANT, 'Infant'),
 	]
 
-	booking_id = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='passengers')
+	booking = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='passengers')
 	passenger_type = models.CharField(max_length=8, choices=PASSENGER_TYPE_CHOICES, default=TYPE_ADULT)
 	title = models.CharField(max_length=16, null=True, blank=True)
 	first_name = models.CharField(max_length=150)
@@ -85,8 +85,8 @@ class Passenger(models.Model):
 
 
 class HotelBooking(models.Model):
-	booking_id = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='hotel_bookings')
-	hotel_id = models.ForeignKey('hotels.Hotel', on_delete=models.SET_NULL, null=True, blank=True, related_name='hotel_reservations')
+	booking = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='hotel_bookings')
+	hotel = models.ForeignKey('hotels.Hotel', on_delete=models.SET_NULL, null=True, blank=True, related_name='hotel_reservations')
 	check_in_date = models.DateField()
 	check_out_date = models.DateField()
 	num_rooms = models.PositiveIntegerField(default=1)
@@ -100,7 +100,7 @@ class HotelBooking(models.Model):
 		db_table = 'reservas_hotel'
 
 	def __str__(self):
-		return f"HotelBooking {self.confirmation_number or self.id} for {self.booking_id}"
+		return f"HotelBooking {self.confirmation_number or self.id} for {self.booking}"
 
 
 class FlightBooking(models.Model):
@@ -112,8 +112,8 @@ class FlightBooking(models.Model):
 		(TYPE_RETURN, 'Return'),
 	]
 
-	booking_id = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='flight_bookings')
-	flight_id = models.ForeignKey('flights.Flight', on_delete=models.SET_NULL, null=True, blank=True, related_name='flight_reservations')
+	booking = models.ForeignKey('bookings.Booking', on_delete=models.CASCADE, related_name='flight_bookings')
+	flight = models.ForeignKey('flights.Flight', on_delete=models.SET_NULL, null=True, blank=True, related_name='flight_reservations')
 	booking_type = models.CharField(max_length=8, choices=BOOKING_TYPE_CHOICES, default=TYPE_OUTBOUND)
 	num_passengers = models.PositiveIntegerField(default=1)
 	seat_numbers = models.TextField(null=True, blank=True)
@@ -125,4 +125,4 @@ class FlightBooking(models.Model):
 		db_table = 'reservas_vuelo'
 
 	def __str__(self):
-		return f"FlightBooking {self.pnr_number or self.id} ({self.booking_id})"
+		return f"FlightBooking {self.pnr_number or self.id} ({self.booking})"

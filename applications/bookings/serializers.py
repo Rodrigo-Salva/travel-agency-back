@@ -26,7 +26,7 @@ class HotelBookingSerializer(serializers.ModelSerializer):
         model = models.HotelBooking
         fields = [
             'id',
-            'hotel_id',
+            'hotel',
             'check_in_date',
             'check_out_date',
             'num_rooms',
@@ -43,7 +43,7 @@ class FlightBookingSerializer(serializers.ModelSerializer):
         model = models.FlightBooking
         fields = [
             'id',
-            'flight_id',
+            'flight',
             'booking_type',
             'num_passengers',
             'seat_numbers',
@@ -59,7 +59,7 @@ class BookingListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'booking_number',
-            'customer_id',
+            'customer',
             'travel_date',
             'return_date',
             'num_adults',
@@ -92,8 +92,8 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'booking_number',
-            'customer_id',
-            'package_id',
+            'customer',
+            'package',
             'travel_date',
             'return_date',
             'num_adults',
@@ -113,12 +113,27 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             'hotel_bookings',
             'flight_bookings',
         ]
-        read_only_fields = ['id', 'booking_date', 'updated_at']
+        read_only_fields = ['id', 'booking_date', 'updated_at', 'customer']
         extra_kwargs = {
             'booking_number': {'required': False, 'allow_blank': True},
         }
 
     def validate(self, attrs):
+        from datetime import date
+
+        travel_date = attrs.get('travel_date')
+        return_date = attrs.get('return_date')
+
+        if travel_date and travel_date < date.today():
+            raise serializers.ValidationError({
+                'travel_date': 'La fecha de viaje no puede ser en el pasado.'
+            })
+        
+        if return_date and travel_date and return_date <= travel_date:
+            raise serializers.ValidationError({
+                'return_date': 'La fecha de regreso debe ser posterior a la fecha de viaje.'
+            })
+        
         return attrs
 
     def create(self, validated_data):
@@ -132,12 +147,12 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         booking = models.Booking.objects.create(**validated_data)
 
         for p in passengers_data:
-            models.Passenger.objects.create(booking_id=booking, **p)
+            models.Passenger.objects.create(booking=booking, **p)
 
         for h in hotel_bookings_data:
-            models.HotelBooking.objects.create(booking_id=booking, **h)
+            models.HotelBooking.objects.create(booking=booking, **h)
 
         for f in flight_bookings_data:
-            models.FlightBooking.objects.create(booking_id=booking, **f)
+            models.FlightBooking.objects.create(booking=booking, **f)
 
         return booking
