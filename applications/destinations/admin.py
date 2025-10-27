@@ -2,6 +2,10 @@ from django.contrib import admin
 from .models import Destination
 
 
+from django.contrib import admin
+from .models import Destination
+
+
 @admin.register(Destination)
 class DestinationAdmin(admin.ModelAdmin):
     """
@@ -28,8 +32,6 @@ class DestinationAdmin(admin.ModelAdmin):
         'country',
         'description'
     ]
-    
-    list_editable = ['is_popular']
     
     readonly_fields = ['created_at']
     

@@ -53,12 +53,9 @@ class BookingViewSet(viewsets.ModelViewSet):
         travel_date_from = self.request.query_params.get('travel_date_from', None)
         travel_date_to = self.request.query_params.get('travel_date_to', None)
         
-        if travel_date_from:
-            queryset = queryset.filter(travel_date__gte=travel_date_from)
-        
-        if travel_date_to:
-            queryset = queryset.filter(travel_date__lte=travel_date_to)
-        
+        if not user.is_staff:
+            queryset = queryset.filter(customer=user)
+
         return queryset
     
     def list(self, request, *args, **kwargs):

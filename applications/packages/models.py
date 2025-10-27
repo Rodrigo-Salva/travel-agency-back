@@ -43,8 +43,8 @@ class Package(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Activo")
     available_from = models.DateField(verbose_name="Disponible desde")
     available_until = models.DateField(verbose_name="Disponible hasta")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
 
     class Meta:
         verbose_name = "Paquete Turístico"
