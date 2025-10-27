@@ -5,6 +5,7 @@ __pycache__/
 myvenv/
 venv/
 env/
+.venv/
 
 # Django
 *.log

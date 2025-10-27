@@ -31,6 +31,12 @@ class DestinationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El nombre es requerido")
         return value
     
+    def validate_country(self, value):
+        """Validar que el país no esté vacío"""
+        if not value or value.strip() == '':
+            raise serializers.ValidationError("El país es requerido")
+        return value
+    
     def validate(self, attrs):
         """Validar coordenadas si están presentes"""
         latitude = attrs.get('latitude')
