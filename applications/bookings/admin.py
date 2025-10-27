@@ -17,7 +17,8 @@ class BookingAdmin(admin.ModelAdmin):
 
 	def get_customer_email(self, obj):
 		return obj.customer.email if obj.customer else 'N/A'
-	get_customer_email.short_description = 'Customer'
+	get_customer_email.short_description = 'Cliente'
+	get_customer_email.admin_order_field = 'customer__email'
 
 
 @admin.register(models.Passenger)
