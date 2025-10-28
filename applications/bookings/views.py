@@ -15,7 +15,7 @@ from .serializers import (
 class BookingViewSet(viewsets.ModelViewSet):
     """ViewSet para reservas"""
     queryset = Booking.objects.select_related(
-        'customer', 'package'
+        'customer', 'package_id'
     ).prefetch_related(
         'passengers',
         'hotel_bookings',
