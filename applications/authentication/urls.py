@@ -1,9 +1,14 @@
 """
-URLs de [NOMBRE_APP]
-EQUIPO X: Agregar las rutas aquí
+URLs de Autenticación
 """
 from django.urls import path
+from . import views
 
 urlpatterns = [
-    #TODO: Agregar endpoints aquí
+    # Autenticación de usuarios
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('users/', views.UserListView.as_view(), name='user-list'),
 ]
