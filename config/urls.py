@@ -13,16 +13,16 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # API v1
-    #path('api/v1/auth/', include('apps.authentication.urls')),
-    #path('api/v1/destinations/', include('apps.destinations.urls')),
-    #path('api/v1/packages/', include('apps.packages.urls')),
-    #path('api/v1/hotels/', include('apps.hotels.urls')),
-    #path('api/v1/flights/', include('apps.flights.urls')),
-    #path('api/v1/activities/', include('apps.activities.urls')),
-    #path('api/v1/bookings/', include('apps.bookings.urls')),
-    #path('api/v1/reviews/', include('apps.reviews.urls')),
-    #path('api/v1/promotions/', include('apps.promotions.urls')),
-    #path('api/v1/inquiries/', include('apps.inquiries.urls')),
+    path('api/v1/auth/', include('applications.authentication.urls')),
+    path('api/v1/destinations/', include('applications.destinations.urls')),
+    path('api/v1/packages/', include('applications.packages.urls')),
+    path('api/v1/hotels/', include('applications.hotels.urls')),
+    path('api/v1/flights/', include('applications.flights.urls')),
+    path('api/v1/activities/', include('applications.activities.urls')),
+    path('api/v1/bookings/', include('applications.bookings.urls')),
+    path('api/v1/reviews/', include('applications.reviews.urls')),
+    path('api/v1/promotions/', include('applications.promotions.urls')),
+    path('api/v1/inquiries/', include('applications.inquiries.urls')),
 ]
 
 # Media files en desarrollo
