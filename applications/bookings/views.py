@@ -53,9 +53,12 @@ class BookingViewSet(viewsets.ModelViewSet):
         travel_date_from = self.request.query_params.get('travel_date_from', None)
         travel_date_to = self.request.query_params.get('travel_date_to', None)
         
-        if not user.is_staff:
-            queryset = queryset.filter(customer=user)
-
+        if travel_date_from:
+            queryset = queryset.filter(travel_date__gte=travel_date_from)
+        
+        if travel_date_to:
+            queryset = queryset.filter(travel_date__lte=travel_date_to)
+        
         return queryset
     
     def list(self, request, *args, **kwargs):
@@ -133,3 +136,29 @@ class BookingViewSet(viewsets.ModelViewSet):
             'numero_reserva': booking.booking_number,
             'detalles': BookingDetailSerializer(booking).data
         })
+        
+    def destroy(self, request, *args, **kwargs):
+        """DELETE /api/v1/bookings/{id}/ - Eliminar reserva (usuario o admin)"""
+        booking = self.get_object()
+
+        # Si no es dueño ni admin, no puede eliminar
+        if not (request.user.user_type == 'admin' or booking.customer == request.user):
+            return Response({
+                'exito': False,
+                'mensaje': 'No tienes permiso para eliminar esta reserva.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # No permitir eliminar reservas completadas
+        if booking.status == 'completed':
+            return Response({
+                'exito': False,
+                'mensaje': 'No puedes eliminar una reserva que ya fue completada.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        booking_number = booking.booking_number
+        booking.delete()
+
+        return Response({
+            'exito': True,
+            'mensaje': f'La reserva {booking_number} ha sido eliminada correctamente.'
+        }, status=status.HTTP_204_NO_CONTENT)
