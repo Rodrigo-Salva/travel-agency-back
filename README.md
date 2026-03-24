@@ -316,6 +316,7 @@ coverage report
 5. 🔁 Abre un Pull Request
 
 > Sigue el estándar de [Conventional Commits](https://www.conventionalcommits.org/) para los mensajes.
+> un consulta ?, me podria escribir a mi correo o por linkedin
 
 ---
 
