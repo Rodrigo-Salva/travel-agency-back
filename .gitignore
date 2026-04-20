@@ -14,7 +14,7 @@ db.sqlite3
 local_settings.py
 
 # Environment
-#.env
+env
 
 # IDE
 .vscode/
