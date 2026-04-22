@@ -15,7 +15,7 @@ from .serializers import (
 class BookingViewSet(viewsets.ModelViewSet):
     """ViewSet para reservas"""
     queryset = Booking.objects.select_related(
-        'customer', 'package_id'
+        'customer', 'package'
     ).prefetch_related(
         'passengers',
         'hotel_bookings',
@@ -90,7 +90,7 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'errores': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        booking = serializer.save()
+        booking = serializer.save(customer=request.user)
         
         return Response({
             'exito': True,
