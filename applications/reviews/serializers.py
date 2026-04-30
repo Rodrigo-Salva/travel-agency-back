@@ -69,20 +69,27 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             'pros',
             'cons',
         ]
-    
+        extra_kwargs = {
+            'booking': {'required': False, 'allow_null': True},
+            'package': {'required': False, 'allow_null': True},
+            'title':   {'required': False, 'allow_blank': True, 'default': ''},
+            'comment': {'required': False, 'allow_blank': True, 'default': ''},
+            'pros':    {'required': False, 'allow_blank': True, 'allow_null': True},
+            'cons':    {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
+
     def validate(self, data):
         booking = data.get('booking')
         request = self.context.get('request')
-        
+
         if booking and request and request.user:
             if booking.customer != request.user:
                 raise serializers.ValidationError(
                     "No puedes hacer una reseña de una reserva que no te pertenece"
                 )
-            
             if Review.objects.filter(booking=booking).exists():
                 raise serializers.ValidationError(
                     "Ya existe una reseña para esta reserva"
                 )
-        
+
         return data
