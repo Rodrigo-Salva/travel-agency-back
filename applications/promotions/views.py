@@ -1,4 +1,7 @@
+from decimal import Decimal
+from django.utils import timezone
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Coupon, Wishlist
@@ -10,7 +13,7 @@ class CouponViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Coupon.objects.filter(is_active=True)
     serializer_class = CouponSerializer
     permission_classes = [AllowAny]
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
@@ -20,10 +23,55 @@ class CouponViewSet(viewsets.ReadOnlyModelViewSet):
             'cupones': serializer.data
         })
 
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def validate(self, request):
+        code = request.data.get('code', '').strip().upper()
+        amount = request.data.get('amount', 0)
+
+        if not code:
+            return Response({'exito': False, 'mensaje': 'Ingresa un código de cupón'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            coupon = Coupon.objects.get(code=code, is_active=True)
+        except Coupon.DoesNotExist:
+            return Response({'exito': False, 'mensaje': 'Cupón no válido o inactivo'}, status=status.HTTP_404_NOT_FOUND)
+
+        now = timezone.now().date()
+        if coupon.valid_from and coupon.valid_from > now:
+            return Response({'exito': False, 'mensaje': 'Este cupón aún no es válido'}, status=status.HTTP_400_BAD_REQUEST)
+        if coupon.valid_until and coupon.valid_until < now:
+            return Response({'exito': False, 'mensaje': 'Este cupón ha expirado'}, status=status.HTTP_400_BAD_REQUEST)
+        if coupon.max_uses and coupon.times_used >= coupon.max_uses:
+            return Response({'exito': False, 'mensaje': 'Este cupón ha alcanzado su límite de usos'}, status=status.HTTP_400_BAD_REQUEST)
+
+        total = Decimal(str(amount))
+        if coupon.min_purchase_amount and total < coupon.min_purchase_amount:
+            return Response({
+                'exito': False,
+                'mensaje': f'El monto mínimo para este cupón es S/ {coupon.min_purchase_amount}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if coupon.discount_type == 'percentage':
+            discount = total * (coupon.discount_value / 100)
+            if coupon.max_discount_amount:
+                discount = min(discount, coupon.max_discount_amount)
+        else:
+            discount = min(coupon.discount_value, total)
+
+        return Response({
+            'exito': True,
+            'mensaje': f'Cupón aplicado: {coupon.description}',
+            'coupon_id': coupon.id,
+            'discount_type': coupon.discount_type,
+            'discount_value': str(coupon.discount_value),
+            'discount_amount': str(discount.quantize(Decimal('0.01'))),
+            'final_amount': str((total - discount).quantize(Decimal('0.01'))),
+        })
+
 
 class WishlistViewSet(viewsets.ModelViewSet):
     """ViewSet para lista de deseos"""
-    queryset = Wishlist.objects.select_related('package')
+    queryset = Wishlist.objects.select_related('package__destination')
     serializer_class = WishlistSerializer
     permission_classes = [IsAuthenticated]
     
