@@ -5,9 +5,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Review(models.Model):
     booking = models.ForeignKey(
         'bookings.Booking',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='reviews',
-        verbose_name='Reserva'
+        verbose_name='Reserva',
+        null=True,
+        blank=True,
     )
     
     customer = models.ForeignKey(
@@ -19,9 +21,11 @@ class Review(models.Model):
     
     package = models.ForeignKey(
         'packages.Package',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         related_name='reviews',
-        verbose_name='Paquete'
+        verbose_name='Paquete',
+        null=True,
+        blank=True,
     )
     
     overall_rating = models.IntegerField(
@@ -57,8 +61,8 @@ class Review(models.Model):
         blank=True
     )
     
-    title = models.CharField(max_length=200, verbose_name='Título')
-    comment = models.TextField(verbose_name='Comentario')
+    title = models.CharField(max_length=200, verbose_name='Título', blank=True, default='')
+    comment = models.TextField(verbose_name='Comentario', blank=True, default='')
     pros = models.TextField(verbose_name='Aspectos Positivos', blank=True, null=True)
     cons = models.TextField(verbose_name='Aspectos Negativos', blank=True, null=True)
     
