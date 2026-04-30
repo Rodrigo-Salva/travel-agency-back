@@ -19,6 +19,13 @@ class PassengerSerializer(serializers.ModelSerializer):
             'passport_number',
             'nationality',
         ]
+        extra_kwargs = {
+            'title':           {'required': False, 'allow_blank': True, 'allow_null': True},
+            'date_of_birth':   {'required': False, 'allow_null': True},
+            'gender':          {'required': False, 'allow_blank': True, 'allow_null': True},
+            'passport_number': {'required': False, 'allow_blank': True, 'allow_null': True},
+            'nationality':     {'required': False, 'allow_blank': True, 'allow_null': True},
+        }
 
 
 class HotelBookingSerializer(serializers.ModelSerializer):
@@ -113,9 +120,17 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             'hotel_bookings',
             'flight_bookings',
         ]
-        read_only_fields = ['id', 'booking_date', 'updated_at', 'customer']
+        read_only_fields = [
+            'id', 'booking_date', 'updated_at', 'customer',
+            'subtotal', 'discount_amount', 'tax_amount', 'total_amount', 'paid_amount',
+            'status', 'payment_status',
+        ]
         extra_kwargs = {
             'booking_number': {'required': False, 'allow_blank': True},
+            'return_date': {'required': False, 'allow_null': True},
+            'num_children': {'required': False},
+            'num_infants': {'required': False},
+            'special_requests': {'required': False, 'allow_blank': True, 'allow_null': True},
         }
 
     def validate(self, attrs):
@@ -124,25 +139,36 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         travel_date = attrs.get('travel_date')
         return_date = attrs.get('return_date')
 
-        if travel_date and travel_date < date.today():
-            raise serializers.ValidationError({
-                'travel_date': 'La fecha de viaje no puede ser en el pasado.'
-            })
-        
         if return_date and travel_date and return_date <= travel_date:
             raise serializers.ValidationError({
                 'return_date': 'La fecha de regreso debe ser posterior a la fecha de viaje.'
             })
-        
+
         return attrs
 
     def create(self, validated_data):
+        from decimal import Decimal
+
         passengers_data = validated_data.pop('passengers', [])
         hotel_bookings_data = validated_data.pop('hotel_bookings', [])
         flight_bookings_data = validated_data.pop('flight_bookings', [])
 
         if not validated_data.get('booking_number'):
             validated_data['booking_number'] = uuid4().hex[:12].upper()
+
+        # Calculate totals from package prices
+        package = validated_data.get('package')
+        num_adults = validated_data.get('num_adults', 1)
+        num_children = validated_data.get('num_children', 0)
+        if package:
+            price_adult = package.price_adult or Decimal('0')
+            price_child = package.price_child or Decimal('0')
+            subtotal = price_adult * num_adults + price_child * num_children
+        else:
+            subtotal = Decimal('0')
+
+        validated_data['subtotal'] = subtotal
+        validated_data['total_amount'] = subtotal
 
         booking = models.Booking.objects.create(**validated_data)
 
