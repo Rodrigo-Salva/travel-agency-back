@@ -1,7 +1,6 @@
 from django.db import models
-
-# Create your models here.
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
 class User(AbstractUser):
@@ -84,3 +83,34 @@ class User(AbstractUser):
     
     def __str__(self):
         return f"{self.username} - {self.get_user_type_display()}"
+
+
+class Notification(models.Model):
+    TYPE_BOOKING   = 'booking'
+    TYPE_PAYMENT   = 'payment'
+    TYPE_REVIEW    = 'review'
+    TYPE_PROMO     = 'promo'
+    TYPE_SYSTEM    = 'system'
+
+    TYPE_CHOICES = [
+        (TYPE_BOOKING, 'Reserva'),
+        (TYPE_PAYMENT, 'Pago'),
+        (TYPE_REVIEW,  'Reseña'),
+        (TYPE_PROMO,   'Promoción'),
+        (TYPE_SYSTEM,  'Sistema'),
+    ]
+
+    user       = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    type       = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_SYSTEM)
+    title      = models.CharField(max_length=200)
+    message    = models.TextField()
+    is_read    = models.BooleanField(default=False)
+    link       = models.CharField(max_length=300, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notificaciones'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user.username} — {self.title}"

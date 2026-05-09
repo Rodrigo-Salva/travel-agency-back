@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from applications.bookings.views import StripeWebhookView, AdminMetricsView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -31,10 +32,12 @@ urlpatterns = [
     path('api/hotels/', include('applications.hotels.urls')),
     path('api/flights/', include('applications.flights.urls')),
     path('api/activities/', include('applications.activities.urls')),
+    path('api/bookings/metrics/', AdminMetricsView.as_view(), name='admin-metrics'),
     path('api/bookings/', include('applications.bookings.urls')),
     path('api/reviews/', include('applications.reviews.urls')),
     path('api/promotions/', include('applications.promotions.urls')),
     path('api/inquiries/', include('applications.inquiries.urls')),
+    path('api/payments/webhook/', StripeWebhookView.as_view(), name='stripe-webhook'),
 
     # Swagger/OpenAPI
     path('swagger.json/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

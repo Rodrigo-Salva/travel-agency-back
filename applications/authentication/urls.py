@@ -4,11 +4,12 @@ EQUIPO X: Agregar las rutas aquí
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegisterView, UserViewSet,LoginView
+from .views import RegisterView, UserViewSet, LoginView, NotificationViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
+router.register('notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
     path('', include(router.urls)),

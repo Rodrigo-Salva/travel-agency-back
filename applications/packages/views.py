@@ -61,7 +61,11 @@ class PackageViewSet(viewsets.ModelViewSet):
         min_days = self.request.query_params.get('min_days', None)
         if min_days:
             queryset = queryset.filter(duration_days__gte=min_days)
-        
+
+        max_days = self.request.query_params.get('max_days', None)
+        if max_days:
+            queryset = queryset.filter(duration_days__lte=max_days)
+
         return queryset
     
     def list(self, request, *args, **kwargs):

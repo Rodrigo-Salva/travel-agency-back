@@ -2,7 +2,20 @@ from uuid import uuid4
 
 from rest_framework import serializers
 
+from django.contrib.auth import get_user_model
+
 from . import models
+
+
+class CustomerBriefSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone']
+
+
+class PackageBriefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
 
 
 class PassengerSerializer(serializers.ModelSerializer):
@@ -61,6 +74,8 @@ class FlightBookingSerializer(serializers.ModelSerializer):
 
 
 class BookingListSerializer(serializers.ModelSerializer):
+    customer = CustomerBriefSerializer(read_only=True)
+
     class Meta:
         model = models.Booking
         fields = [
@@ -83,6 +98,8 @@ class BookingDetailSerializer(serializers.ModelSerializer):
     passengers = PassengerSerializer(many=True, read_only=True)
     hotel_bookings = HotelBookingSerializer(many=True, read_only=True)
     flight_bookings = FlightBookingSerializer(many=True, read_only=True)
+    customer = CustomerBriefSerializer(read_only=True)
+    package = PackageBriefSerializer(read_only=True)
 
     class Meta:
         model = models.Booking

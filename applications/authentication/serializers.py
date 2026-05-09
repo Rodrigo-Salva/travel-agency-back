@@ -1,7 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from django.db import IntegrityError
 from rest_framework import serializers
-from .models import User
+from .models import User, Notification
 
 class UserSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
@@ -55,3 +55,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         )
         
         read_only_fields = ('username', 'email', 'user_type', 'is_active', 'nationality')
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'type', 'title', 'message', 'is_read', 'link', 'created_at']
+        read_only_fields = ['id', 'type', 'title', 'message', 'link', 'created_at']

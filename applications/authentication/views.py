@@ -6,10 +6,12 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from core.permissions import IsAdminUser
+from .models import Notification
 from .serializers import (
-    UserSerializer, 
-    UserRegistrationSerializer, 
-    UserUpdateSerializer
+    UserSerializer,
+    UserRegistrationSerializer,
+    UserUpdateSerializer,
+    NotificationSerializer,
 )
 
 User = get_user_model()
@@ -178,3 +180,36 @@ class UserViewSet(viewsets.ModelViewSet):
             'exito': True,
             'mensaje': 'Usuario desactivado exitosamente'
         })
+
+
+class NotificationViewSet(viewsets.GenericViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+    def list(self, request):
+        """GET /api/auth/notifications/ — lista las 20 más recientes"""
+        qs = self.get_queryset()[:20]
+        unread = self.get_queryset().filter(is_read=False).count()
+        return Response({
+            'exito': True,
+            'unread': unread,
+            'notifications': NotificationSerializer(qs, many=True).data,
+        })
+
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        """POST /api/auth/notifications/mark_all_read/"""
+        self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'exito': True, 'mensaje': 'Notificaciones marcadas como leídas.'})
+
+    @action(detail=True, methods=['post'])
+    def mark_read(self, request, pk=None):
+        """POST /api/auth/notifications/{id}/mark_read/"""
+        notif = self.get_queryset().filter(pk=pk).first()
+        if notif:
+            notif.is_read = True
+            notif.save(update_fields=['is_read'])
+        return Response({'exito': True})
