@@ -16,7 +16,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import IsOwnerOrAdmin, IsAdminUser
 from .emails import send_booking_confirmation, send_payment_confirmation, send_booking_cancellation
 from applications.authentication.notifications import (
-    notify_booking_created, notify_payment_confirmed, notify_booking_cancelled
+    notify_booking_created, notify_payment_confirmed, notify_booking_cancelled,
+    notify_booking_confirmed, notify_booking_completed,
 )
 from .models import Booking
 from .serializers import (
@@ -143,6 +144,22 @@ class BookingViewSet(viewsets.ModelViewSet):
             'numero_reserva': booking.booking_number,
             'detalles': BookingDetailSerializer(booking).data
         })
+
+    def partial_update(self, request, *args, **kwargs):
+        booking = self.get_object()
+        old_status = booking.status
+        response = super().partial_update(request, *args, **kwargs)
+        if response.status_code == 200:
+            booking.refresh_from_db()
+            new_status = booking.status
+            if old_status != new_status:
+                if new_status == Booking.STATUS_CONFIRMED:
+                    notify_booking_confirmed(booking)
+                elif new_status == Booking.STATUS_COMPLETED:
+                    notify_booking_completed(booking)
+                elif new_status == Booking.STATUS_CANCELLED:
+                    notify_booking_cancelled(booking)
+        return response
 
     def destroy(self, request, *args, **kwargs):
         """DELETE /api/bookings/{id}/"""
