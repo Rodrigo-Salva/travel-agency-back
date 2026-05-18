@@ -47,7 +47,7 @@ class ReviewAdmin(admin.ModelAdmin):
             )
         }),
         ('Contenido', {
-            'fields': ('comment', 'pros', 'cons')
+            'fields': ('comment', 'pros', 'cons', 'photo')
         }),
         ('Estado', {
             'fields': ('is_verified', 'is_approved')

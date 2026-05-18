@@ -66,6 +66,13 @@ class Review(models.Model):
     pros = models.TextField(verbose_name='Aspectos Positivos', blank=True, null=True)
     cons = models.TextField(verbose_name='Aspectos Negativos', blank=True, null=True)
     
+    photo = models.ImageField(
+        upload_to='reviews/photos/',
+        blank=True,
+        null=True,
+        verbose_name='Foto de la reseña'
+    )
+
     is_verified = models.BooleanField(default=False, verbose_name='Verificada')
     is_approved = models.BooleanField(default=False, verbose_name='Aprobada')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Creación')

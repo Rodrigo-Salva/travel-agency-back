@@ -26,6 +26,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             'comment',
             'pros',
             'cons',
+            'photo',
             'is_verified',
             'is_approved',
             'created_at',
@@ -68,6 +69,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             'comment',
             'pros',
             'cons',
+            'photo',
         ]
         extra_kwargs = {
             'booking': {'required': False, 'allow_null': True},
@@ -76,6 +78,7 @@ class ReviewCreateSerializer(serializers.ModelSerializer):
             'comment': {'required': False, 'allow_blank': True, 'default': ''},
             'pros':    {'required': False, 'allow_blank': True, 'allow_null': True},
             'cons':    {'required': False, 'allow_blank': True, 'allow_null': True},
+            'photo':   {'required': False, 'allow_null': True},
         }
 
     def validate(self, data):
