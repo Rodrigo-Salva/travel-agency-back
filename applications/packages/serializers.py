@@ -59,6 +59,8 @@ class PackageListSerializer(serializers.ModelSerializer):
             'price_child',
             'image',
             'is_featured',
+            'discount_percentage',
+            'discounted_price_adult',
             'created_at'
         ]
 
@@ -74,7 +76,8 @@ class PackageDetailSerializer(serializers.ModelSerializer):
     
     # Campos calculados
     total_duration = serializers.SerializerMethodField()
-    
+    discounted_price_adult = serializers.ReadOnlyField()
+
     class Meta:
         model = Package
         fields = [
@@ -90,6 +93,8 @@ class PackageDetailSerializer(serializers.ModelSerializer):
             'total_duration',
             'price_adult',
             'price_child',
+            'discount_percentage',
+            'discounted_price_adult',
             'max_people',
             'min_people',
             'includes_flight',
@@ -139,10 +144,11 @@ class PackageCreateSerializer(serializers.ModelSerializer):
             'includes_guide',
             'image',
             'is_featured',
+            'discount_percentage',
             'available_from',
             'available_until'
         ]
-    
+
     def validate(self, attrs):
         """Validaciones personalizadas"""
         if attrs.get('duration_days', 0) < 1:

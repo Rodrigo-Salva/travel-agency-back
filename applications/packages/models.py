@@ -38,6 +38,12 @@ class Package(models.Model):
     includes_transport = models.BooleanField(default=False, verbose_name="Incluye Transporte")
     includes_guide = models.BooleanField(default=False, verbose_name="Incluye Guía")
 
+    discount_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        default=0, blank=True,
+        verbose_name="Descuento (%)"
+    )
+
     image = models.ImageField(upload_to='packages/', blank=True, null=True, verbose_name="Imagen")
     is_featured = models.BooleanField(default=False, verbose_name="Destacado")
     is_active = models.BooleanField(default=True, verbose_name="Activo")
@@ -54,6 +60,14 @@ class Package(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def discounted_price_adult(self):
+        if self.discount_percentage and self.discount_percentage > 0:
+            from decimal import Decimal
+            factor = 1 - (Decimal(str(self.discount_percentage)) / 100)
+            return (self.price_adult * factor).quantize(Decimal('0.01'))
+        return self.price_adult
 
     def save(self, *args, **kwargs):
         if not self.slug:

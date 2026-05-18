@@ -14,7 +14,7 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Package)
 class PackageAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'destination', 'category', 'price_adult', 
+        'name', 'destination', 'category', 'price_adult', 'discount_percentage',
         'duration_days', 'is_featured', 'is_active', 'created_at'
     ]
     list_filter = ['category', 'destination', 'is_featured', 'is_active', 'created_at']
@@ -34,7 +34,7 @@ class PackageAdmin(admin.ModelAdmin):
             'fields': (('duration_days', 'duration_nights'), ('min_people', 'max_people'))
         }),
         ('Precios', {
-            'fields': ('price_adult', 'price_child')
+            'fields': (('price_adult', 'price_child'), 'discount_percentage')
         }),
         ('Inclusiones', {
             'fields': (
