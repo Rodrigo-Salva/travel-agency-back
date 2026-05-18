@@ -1,17 +1,28 @@
+import secrets
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from django.utils import timezone
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from core.permissions import IsAdminUser
+from .emails import send_password_reset, send_password_changed
 from .models import Notification
 from .serializers import (
     UserSerializer,
     UserRegistrationSerializer,
     UserUpdateSerializer,
     NotificationSerializer,
+    ChangePasswordSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 
 User = get_user_model()
@@ -180,6 +191,93 @@ class UserViewSet(viewsets.ModelViewSet):
             'exito': True,
             'mensaje': 'Usuario desactivado exitosamente'
         })
+
+
+class ChangePasswordView(APIView):
+    """POST /api/auth/change_password/ — cambiar contraseña estando autenticado"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(serializer.validated_data['current_password']):
+            return Response({'exito': False, 'mensaje': 'La contraseña actual es incorrecta.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save(update_fields=['password'])
+        send_password_changed(user)
+        return Response({'exito': True, 'mensaje': 'Contraseña actualizada correctamente.'})
+
+
+class ForgotPasswordView(APIView):
+    """POST /api/auth/forgot_password/ — solicitar enlace de reset"""
+    permission_classes = [AllowAny]
+    _EXPIRY = 30 * 60  # 30 minutos en segundos
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email'].lower().strip()
+        # Respuesta idéntica exista o no el usuario (evita user enumeration)
+        generic = {'exito': True,
+                   'mensaje': 'Si el correo está registrado recibirás un enlace en los próximos minutos.'}
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email__iexact=email, is_active=True)
+        except User.DoesNotExist:
+            return Response(generic)
+
+        token = secrets.token_urlsafe(48)
+        cache.set(f'pwd_reset:{token}', user.pk, self._EXPIRY)
+
+        frontend_url = request.data.get('frontend_url', 'http://localhost:3000')
+        reset_url = f"{frontend_url}/reset-password?token={token}"
+        send_password_reset(user, reset_url)
+
+        return Response(generic)
+
+
+class ResetPasswordView(APIView):
+    """POST /api/auth/reset_password/ — confirmar reset con token"""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        token = serializer.validated_data['token']
+        user_pk = cache.get(f'pwd_reset:{token}')
+
+        if not user_pk:
+            return Response({'exito': False,
+                             'mensaje': 'El enlace es inválido o ha expirado.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=user_pk, is_active=True)
+        except User.DoesNotExist:
+            return Response({'exito': False, 'mensaje': 'Usuario no encontrado.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(serializer.validated_data['new_password'])
+        user.save(update_fields=['password'])
+        cache.delete(f'pwd_reset:{token}')
+        send_password_changed(user)
+
+        return Response({'exito': True,
+                         'mensaje': '¡Contraseña restablecida! Ya puedes iniciar sesión.'})
 
 
 class NotificationViewSet(viewsets.GenericViewSet):

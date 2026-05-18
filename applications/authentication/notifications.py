@@ -33,3 +33,23 @@ def notify_booking_cancelled(booking):
         type=Notification.TYPE_BOOKING,
         link=f'/bookings/{booking.id}',
     )
+
+
+def notify_booking_confirmed(booking):
+    notify(
+        user=booking.customer,
+        title='Reserva confirmada',
+        message=f'Tu reserva #{booking.booking_number} ha sido confirmada. ¡Prepárate para viajar!',
+        type=Notification.TYPE_BOOKING,
+        link=f'/bookings/{booking.id}',
+    )
+
+
+def notify_booking_completed(booking):
+    notify(
+        user=booking.customer,
+        title='Reserva completada',
+        message=f'Tu reserva #{booking.booking_number} ha sido marcada como completada. ¡Gracias por viajar con nosotros!',
+        type=Notification.TYPE_BOOKING,
+        link=f'/bookings/{booking.id}',
+    )

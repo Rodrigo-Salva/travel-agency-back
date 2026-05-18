@@ -57,6 +57,34 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ('username', 'email', 'user_type', 'is_active', 'nationality')
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password     = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Las contraseñas no coinciden.'})
+        validate_password(data['new_password'])
+        return data
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token        = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Las contraseñas no coinciden.'})
+        validate_password(data['new_password'])
+        return data
+
+
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
