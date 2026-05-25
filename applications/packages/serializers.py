@@ -69,11 +69,15 @@ class PackageDetailSerializer(serializers.ModelSerializer):
     """
     Serializer detallado de paquete con itinerario completo
     """
-    
+
     destination = serializers.StringRelatedField()
+    destination_id = serializers.IntegerField(source='destination.id', read_only=True)
+    destination_country = serializers.CharField(source='destination.country', read_only=True)
+    destination_latitude = serializers.DecimalField(source='destination.latitude', max_digits=9, decimal_places=6, read_only=True)
+    destination_longitude = serializers.DecimalField(source='destination.longitude', max_digits=9, decimal_places=6, read_only=True)
     category = CategorySerializer(read_only=True)
     itinerary = ItinerarySerializer(many=True, read_only=True)
-    
+
     # Campos calculados
     total_duration = serializers.SerializerMethodField()
     discounted_price_adult = serializers.ReadOnlyField()
@@ -86,6 +90,10 @@ class PackageDetailSerializer(serializers.ModelSerializer):
             'slug',
             'category',
             'destination',
+            'destination_id',
+            'destination_country',
+            'destination_latitude',
+            'destination_longitude',
             'description',
             'short_description',
             'duration_days',
@@ -111,7 +119,7 @@ class PackageDetailSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-    
+
     def get_total_duration(self, obj):
         """Calcular duración total como string"""
         return f"{obj.duration_days} días / {obj.duration_nights} noches"
