@@ -10,7 +10,7 @@
 
 <br/><br/>
 
-# Travel Agency — Backend API
+# Travel Agency — Backend API REST
 
 **API RESTful construida con Django REST Framework para la gestión completa de una agencia de viajes.**  
 Administra paquetes, destinos, reservas, clientes y autenticación basada en roles — lista para producción.
