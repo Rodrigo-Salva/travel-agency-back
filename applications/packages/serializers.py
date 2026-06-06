@@ -44,6 +44,9 @@ class PackageListSerializer(serializers.ModelSerializer):
         read_only=True
     )
     
+    available_spots = serializers.ReadOnlyField()
+    is_sold_out = serializers.ReadOnlyField()
+
     class Meta:
         model = Package
         fields = [
@@ -61,6 +64,10 @@ class PackageListSerializer(serializers.ModelSerializer):
             'is_featured',
             'discount_percentage',
             'discounted_price_adult',
+            'capacity',
+            'booked_count',
+            'available_spots',
+            'is_sold_out',
             'created_at'
         ]
 
@@ -81,6 +88,8 @@ class PackageDetailSerializer(serializers.ModelSerializer):
     # Campos calculados
     total_duration = serializers.SerializerMethodField()
     discounted_price_adult = serializers.ReadOnlyField()
+    available_spots = serializers.ReadOnlyField()
+    is_sold_out = serializers.ReadOnlyField()
 
     class Meta:
         model = Package
@@ -116,6 +125,10 @@ class PackageDetailSerializer(serializers.ModelSerializer):
             'available_from',
             'available_until',
             'itinerary',
+            'capacity',
+            'booked_count',
+            'available_spots',
+            'is_sold_out',
             'created_at',
             'updated_at'
         ]
@@ -153,6 +166,7 @@ class PackageCreateSerializer(serializers.ModelSerializer):
             'image',
             'is_featured',
             'discount_percentage',
+            'capacity',
             'available_from',
             'available_until'
         ]

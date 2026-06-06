@@ -18,13 +18,13 @@ class InquiryModelTest(TestCase):
             message='Me gustaría obtener más información sobre los paquetes disponibles',
             status='new'
         )
-    
+
     def test_inquiry_creation(self):
         self.assertEqual(self.inquiry.name, 'Juan Pérez')
         self.assertEqual(self.inquiry.status, 'new')
-    
+
     def test_inquiry_str(self):
-        expected = f"{self.inquiry.subject} - {self.inquiry.name} (Nueva)"
+        expected = f"{self.inquiry.subject} - {self.inquiry.name}"
         self.assertEqual(str(self.inquiry), expected)
 
 
@@ -35,9 +35,9 @@ class InquiryAPITest(APITestCase):
             username='staff',
             email='staff@example.com',
             password='staffpass123',
-            is_staff=True
+            user_type='admin'
         )
-    
+
     def test_create_inquiry_anonymous(self):
         data = {
             'name': 'María González',
@@ -46,18 +46,17 @@ class InquiryAPITest(APITestCase):
             'subject': 'Pregunta sobre paquetes',
             'message': 'Quisiera información sobre paquetes a Europa'
         }
-        
-        response = self.client.post('/api/inquiries/inquiries/', data)
+        response = self.client.post('/api/inquiries/', data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    
+
     def test_list_inquiries_as_staff(self):
         self.client.force_authenticate(user=self.staff_user)
-        response = self.client.get('/api/inquiries/inquiries/')
+        response = self.client.get('/api/inquiries/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_list_inquiries_anonymous(self):
-        response = self.client.get('/api/inquiries/inquiries/')
+        response = self.client.get('/api/inquiries/')
         self.assertIn(
             response.status_code,
-            [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+            [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
         )

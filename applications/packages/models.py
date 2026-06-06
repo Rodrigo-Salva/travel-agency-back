@@ -44,6 +44,17 @@ class Package(models.Model):
         verbose_name="Descuento (%)"
     )
 
+    capacity = models.PositiveIntegerField(
+        blank=True, null=True,
+        verbose_name="Capacidad máxima (cupos)",
+        help_text="Deja vacío para cupos ilimitados"
+    )
+    booked_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Reservas activas",
+        help_text="Se actualiza automáticamente con cada reserva confirmada"
+    )
+
     image = models.ImageField(upload_to='packages/', blank=True, null=True, verbose_name="Imagen")
     is_featured = models.BooleanField(default=False, verbose_name="Destacado")
     is_active = models.BooleanField(default=True, verbose_name="Activo")
@@ -60,6 +71,19 @@ class Package(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def available_spots(self):
+        """Cupos restantes. None = ilimitado."""
+        if self.capacity is None:
+            return None
+        return max(0, self.capacity - self.booked_count)
+
+    @property
+    def is_sold_out(self):
+        if self.capacity is None:
+            return False
+        return self.booked_count >= self.capacity
 
     @property
     def discounted_price_adult(self):

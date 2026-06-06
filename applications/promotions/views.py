@@ -8,18 +8,56 @@ from .models import Coupon, Wishlist
 from .serializers import CouponSerializer, WishlistSerializer
 
 
-class CouponViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet para cupones"""
-    queryset = Coupon.objects.filter(is_active=True)
+class CouponViewSet(viewsets.ModelViewSet):
+    """ViewSet para cupones — CRUD completo para admins, solo lectura para el resto"""
     serializer_class = CouponSerializer
-    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        if self.request.user and self.request.user.is_authenticated and getattr(self.request.user, 'user_type', '') == 'admin':
+            return Coupon.objects.all().order_by('-created_at')
+        return Coupon.objects.filter(is_active=True).order_by('-created_at')
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve', 'validate'):
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def _is_admin(self):
+        return self.request.user and self.request.user.is_authenticated and getattr(self.request.user, 'user_type', '') == 'admin'
+
+    def create(self, request, *args, **kwargs):
+        if not self._is_admin():
+            return Response({'exito': False, 'mensaje': 'Acceso denegado'}, status=403)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors}, status=400)
+        serializer.save()
+        return Response({'exito': True, 'mensaje': 'Cupón creado', 'cupon': serializer.data}, status=201)
+
+    def update(self, request, *args, **kwargs):
+        if not self._is_admin():
+            return Response({'exito': False, 'mensaje': 'Acceso denegado'}, status=403)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors}, status=400)
+        self.perform_update(serializer)
+        return Response({'exito': True, 'mensaje': 'Cupón actualizado', 'cupon': serializer.data})
+
+    def destroy(self, request, *args, **kwargs):
+        if not self._is_admin():
+            return Response({'exito': False, 'mensaje': 'Acceso denegado'}, status=403)
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'exito': True, 'mensaje': 'Cupón eliminado'}, status=204)
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
         return Response({
             'exito': True,
-            'mensaje': f'Hay {queryset.count()} cupones disponibles',
+            'mensaje': f'Hay {queryset.count()} cupones',
             'cupones': serializer.data
         })
 

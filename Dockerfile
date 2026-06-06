@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # Dependencias Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir -r requirements.txt gunicorn "uvicorn[standard]"
 
 # Copiar código (sin venv, sin .env, gracias a .dockerignore)
 COPY . .

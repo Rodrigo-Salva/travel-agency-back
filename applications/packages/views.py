@@ -1,13 +1,15 @@
 from rest_framework import viewsets, filters, status
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from core.permissions import ReadOnlyOrAdmin
-from .models import Category, Package
+from .models import Category, Package, Itinerary
 from .serializers import (
     CategorySerializer,
     PackageListSerializer,
     PackageDetailSerializer,
-    PackageCreateSerializer
+    PackageCreateSerializer,
+    ItinerarySerializer,
 )
 
 
@@ -98,17 +100,59 @@ class PackageViewSet(viewsets.ModelViewSet):
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response({
                 'exito': False,
                 'mensaje': 'Error al crear el paquete',
                 'errores': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         self.perform_create(serializer)
         return Response({
             'exito': True,
             'mensaje': 'Paquete creado exitosamente',
             'paquete': serializer.data
         }, status=status.HTTP_201_CREATED)
+
+
+class ItineraryViewSet(viewsets.ModelViewSet):
+    """ViewSet para itinerarios de paquetes (CRUD completo para admins)"""
+    serializer_class = ItinerarySerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        package_id = self.kwargs.get('package_pk')
+        if package_id:
+            return Itinerary.objects.filter(package_id=package_id).order_by('day_number')
+        return Itinerary.objects.none()
+
+    def perform_create(self, serializer):
+        package_id = self.kwargs.get('package_pk')
+        serializer.save(package_id=package_id)
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        serializer = self.get_serializer(qs, many=True)
+        return Response({'exito': True, 'itinerario': serializer.data})
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors}, status=400)
+        self.perform_create(serializer)
+        return Response({'exito': True, 'mensaje': 'Día creado', 'dia': serializer.data}, status=201)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            return Response({'exito': False, 'errores': serializer.errors}, status=400)
+        self.perform_update(serializer)
+        return Response({'exito': True, 'mensaje': 'Día actualizado', 'dia': serializer.data})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'exito': True, 'mensaje': 'Día eliminado'}, status=204)

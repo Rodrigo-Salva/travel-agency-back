@@ -25,6 +25,9 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_extensions',
     
+    # Channels
+    'channels',
+
     # Local apps
     'applications.authentication',
     'applications.destinations',
@@ -36,6 +39,7 @@ INSTALLED_APPS = [
     'applications.reviews',
     'applications.promotions',
     'applications.inquiries',
+    'applications.whatsapp',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
 DATABASES = {
@@ -152,3 +157,19 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Agencia de Viajes <no
 STRIPE_SECRET_KEY      = config('STRIPE_SECRET_KEY', default='')
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
 STRIPE_WEBHOOK_SECRET  = config('STRIPE_WEBHOOK_SECRET', default='')
+
+# ─── Django Channels (WebSocket) ───────────────────────────────────────────────
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('REDIS_URL', default='redis://localhost:6379')],
+        },
+    }
+}
+
+# ─── WhatsApp Integration ──────────────────────────────────────────────────────
+WHATSAPP_SERVICE_URL = config('WHATSAPP_SERVICE_URL', default='http://localhost:3001')
+WAHA_URL             = config('WAHA_URL', default='http://localhost:3000')
+WAHA_SESSION         = config('WAHA_SESSION', default='default')
+WAHA_API_KEY         = config('WAHA_API_KEY', default='')

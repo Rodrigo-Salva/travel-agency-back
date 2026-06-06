@@ -1,4 +1,7 @@
 asgiref==3.10.0
+channels==4.0.0
+channels-redis==4.2.0
+redis==5.2.1
 Django==5.0
 django-cors-headers==4.3.0
 django-extensions==4.1
@@ -21,3 +24,4 @@ typing_extensions==4.15.0
 tzdata==2025.2
 uritemplate==4.2.0
 stripe==15.1.0
+requests==2.31.0

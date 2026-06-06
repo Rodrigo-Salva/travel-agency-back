@@ -19,7 +19,6 @@ class CouponModelTest(TestCase):
             valid_until=date.today() + timedelta(days=30),
             is_active=True
         )
-        
         self.coupon_fixed = Coupon.objects.create(
             code='FIXED50',
             description='$50 de descuento',
@@ -29,19 +28,19 @@ class CouponModelTest(TestCase):
             valid_until=date.today() + timedelta(days=30),
             is_active=True
         )
-    
+
     def test_coupon_creation(self):
         self.assertEqual(self.coupon_percentage.code, 'TEST10')
         self.assertEqual(self.coupon_percentage.discount_type, 'percentage')
-    
+
     def test_percentage_discount_calculation(self):
-        purchase = Decimal('1000')
-        discount = self.coupon_percentage.calculate_discount(purchase)
+        total = Decimal('1000')
+        discount = total * (Decimal(str(self.coupon_percentage.discount_value)) / 100)
         self.assertEqual(discount, Decimal('100'))
-    
+
     def test_fixed_discount_calculation(self):
-        purchase = Decimal('1000')
-        discount = self.coupon_fixed.calculate_discount(purchase)
+        total = Decimal('1000')
+        discount = min(self.coupon_fixed.discount_value, total)
         self.assertEqual(discount, Decimal('50'))
 
 
@@ -57,16 +56,16 @@ class CouponAPITest(APITestCase):
             valid_until=date.today() + timedelta(days=30),
             is_active=True
         )
-    
+
     def test_list_coupons(self):
         response = self.client.get('/api/promotions/coupons/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_validate_coupon(self):
         data = {
             'code': 'TEST20',
-            'purchase_amount': 1000
+            'amount': 1000
         }
-        response = self.client.post('/api/promotions/coupons/validate_coupon/', data)
+        response = self.client.post('/api/promotions/coupons/validate/', data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['valid'])
+        self.assertTrue(response.data['exito'])

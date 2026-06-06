@@ -22,10 +22,11 @@ else
   echo "Base de datos ya tiene datos, omitiendo carga inicial."
 fi
 
-echo "Iniciando servidor Gunicorn..."
-exec gunicorn config.wsgi:application \
+echo "Iniciando servidor Uvicorn (ASGI)..."
+exec gunicorn config.asgi:application \
   --bind 0.0.0.0:8000 \
   --workers 2 \
+  --worker-class uvicorn.workers.UvicornWorker \
   --timeout 120 \
   --access-logfile - \
   --error-logfile -

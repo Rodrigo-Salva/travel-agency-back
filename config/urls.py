@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/reviews/', include('applications.reviews.urls')),
     path('api/promotions/', include('applications.promotions.urls')),
     path('api/inquiries/', include('applications.inquiries.urls')),
+    path('api/whatsapp/', include('applications.whatsapp.urls')),
     path('api/payments/webhook/', StripeWebhookView.as_view(), name='stripe-webhook'),
 
     # Swagger/OpenAPI

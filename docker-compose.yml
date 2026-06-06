@@ -14,21 +14,73 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  waha:
+    image: devlikeapro/waha
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: WEBJS
+      WHATSAPP_HOOK_URL: http://web:8000/api/whatsapp/webhook/
+      WHATSAPP_HOOK_EVENTS: message,message.ack
+      WAHA_API_KEY: "6f5f7e54c738442788126099e526a113"
+      WAHA_DASHBOARD_USERNAME: admin
+      WAHA_DASHBOARD_PASSWORD: "b20be94640fd4d05a776c82926b5d0ee"
+    volumes:
+      - waha_sessions:/app/.sessions
+
+  whatsapp-service:
+    build: ../whatsapp-service
+    restart: unless-stopped
+    ports:
+      - "3005:3001"
+    environment:
+      REDIS_URL: redis://redis:6379
+      WAHA_URL: http://waha:3000
+      WAHA_SESSION: default
+      WAHA_API_KEY: "6f5f7e54c738442788126099e526a113"
+      DJANGO_DELIVERY_URL: http://web:8000/api/whatsapp/delivery/
+      PORT: 3001
+    depends_on:
+      redis:
+        condition: service_healthy
+      waha:
+        condition: service_started
+
   web:
     build: .
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8081:8000"
     env_file:
       - .env
     environment:
       DB_HOST: db
+      REDIS_URL: redis://redis:6379
+      WHATSAPP_SERVICE_URL: http://whatsapp-service:3001
+      WAHA_URL: http://waha:3000
+      WAHA_SESSION: default
+      WAHA_API_KEY: "6f5f7e54c738442788126099e526a113"
     volumes:
       - media_files:/app/media
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   media_files:
+  waha_sessions:

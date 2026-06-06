@@ -12,7 +12,7 @@ class InquiryViewSet(viewsets.ModelViewSet):
     queryset = Inquiry.objects.all().order_by('-created_at')
     serializer_class = InquirySerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status']
+    filterset_fields = ['status', 'inquiry_type']
     search_fields = ['name', 'email', 'subject', 'message']
     ordering_fields = ['created_at']
 

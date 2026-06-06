@@ -100,6 +100,13 @@ class BookingViewSet(viewsets.ModelViewSet):
                 'errores': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
         booking = serializer.save(customer=request.user)
+        # Incrementar cupos usados
+        if booking.package_id:
+            from django.db.models import F
+            from applications.packages.models import Package as PkgModel
+            PkgModel.objects.filter(pk=booking.package_id).update(
+                booked_count=F('booked_count') + 1
+            )
         send_booking_confirmation(booking)
         notify_booking_created(booking)
         return Response({
@@ -136,6 +143,13 @@ class BookingViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
         booking.status = 'cancelled'
         booking.save()
+        # Decrementar cupos usados
+        if booking.package_id:
+            from django.db.models import F
+            from applications.packages.models import Package as PkgModel
+            PkgModel.objects.filter(pk=booking.package_id, booked_count__gt=0).update(
+                booked_count=F('booked_count') - 1
+            )
         send_booking_cancellation(booking)
         notify_booking_cancelled(booking)
         return Response({
@@ -182,6 +196,55 @@ class BookingViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_204_NO_CONTENT)
 
     # ─── Stripe payment actions ────────────────────────────────────────────────
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def refund(self, request, pk=None):
+        """POST /api/bookings/{id}/refund/  — Admin marca la reserva como reembolsada"""
+        booking = self.get_object()
+
+        if booking.payment_status == Booking.PAYMENT_REFUNDED:
+            return Response({'exito': False, 'mensaje': 'Esta reserva ya fue reembolsada.'}, status=400)
+        if booking.payment_status not in (Booking.PAYMENT_PAID, Booking.PAYMENT_PARTIAL):
+            return Response({'exito': False, 'mensaje': 'Solo se pueden reembolsar reservas que tengan un pago registrado.'}, status=400)
+
+        refund_amount = request.data.get('refund_amount')
+        reason = request.data.get('reason', '').strip()
+
+        try:
+            if refund_amount is not None:
+                amount = Decimal(str(refund_amount))
+                if amount <= 0 or amount > booking.paid_amount:
+                    return Response({'exito': False, 'mensaje': f'El monto debe estar entre $0.01 y {booking.paid_amount}.'}, status=400)
+            else:
+                amount = booking.paid_amount
+        except (InvalidOperation, TypeError):
+            return Response({'exito': False, 'mensaje': 'Monto inválido.'}, status=400)
+
+        booking.payment_status = Booking.PAYMENT_REFUNDED
+        booking.status = Booking.STATUS_CANCELLED
+        notes = f'Reembolso de ${amount} procesado por {request.user.email}.'
+        if reason:
+            notes += f' Motivo: {reason}'
+        if booking.special_requests:
+            booking.special_requests = booking.special_requests + '\n' + notes
+        else:
+            booking.special_requests = notes
+        booking.save(update_fields=['payment_status', 'status', 'special_requests', 'updated_at'])
+
+        # Liberar cupo
+        if booking.package_id:
+            from django.db.models import F
+            from applications.packages.models import Package as PkgModel
+            PkgModel.objects.filter(pk=booking.package_id, booked_count__gt=0).update(
+                booked_count=F('booked_count') - 1
+            )
+
+        notify_booking_cancelled(booking)
+        return Response({
+            'exito': True,
+            'mensaje': f'Reembolso de {amount} registrado correctamente.',
+            'detalles': BookingDetailSerializer(booking).data
+        })
 
     @action(detail=True, methods=['post'], permission_classes=[IsOwnerOrAdmin])
     def create_payment_intent(self, request, pk=None):

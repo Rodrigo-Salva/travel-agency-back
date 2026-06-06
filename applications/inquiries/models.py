@@ -4,9 +4,16 @@ from applications.packages.models import Package
 
 class Inquiry(models.Model):
     """
-    Consultas de clientes
+    Consultas y cotizaciones de clientes
     """
-    
+
+    TYPE_INQUIRY = 'inquiry'
+    TYPE_QUOTE = 'quote'
+    TYPE_CHOICES = (
+        (TYPE_INQUIRY, 'Consulta general'),
+        (TYPE_QUOTE, 'Solicitud de cotización'),
+    )
+
     STATUS_CHOICES = (
         ('new', 'Nueva'),
         ('in_progress', 'En progreso'),
@@ -55,6 +62,22 @@ class Inquiry(models.Model):
         verbose_name='Estado'
     )
     
+    inquiry_type = models.CharField(
+        max_length=16,
+        choices=TYPE_CHOICES,
+        default=TYPE_INQUIRY,
+        verbose_name='Tipo'
+    )
+
+    # Campos extra para cotizaciones
+    destination_text = models.CharField(max_length=200, blank=True, null=True, verbose_name='Destino deseado')
+    departure_date   = models.DateField(blank=True, null=True, verbose_name='Fecha de salida aproximada')
+    return_date      = models.DateField(blank=True, null=True, verbose_name='Fecha de regreso aproximada')
+    num_adults       = models.PositiveIntegerField(default=1, blank=True, null=True, verbose_name='Adultos')
+    num_children     = models.PositiveIntegerField(default=0, blank=True, null=True, verbose_name='Niños')
+    budget           = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True, verbose_name='Presupuesto (USD)')
+    interests        = models.TextField(blank=True, null=True, verbose_name='Intereses / actividades deseadas')
+
     admin_response = models.TextField(
         blank=True,
         null=True,

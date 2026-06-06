@@ -88,6 +88,7 @@ class BookingListSerializer(serializers.ModelSerializer):
             'num_children',
             'num_infants',
             'total_amount',
+            'paid_amount',
             'status',
             'payment_status',
             'booking_date',
@@ -151,8 +152,6 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        from datetime import date
-
         travel_date = attrs.get('travel_date')
         return_date = attrs.get('return_date')
 
@@ -160,6 +159,14 @@ class BookingCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'return_date': 'La fecha de regreso debe ser posterior a la fecha de viaje.'
             })
+
+        # Validar cupos disponibles
+        package = attrs.get('package')
+        if package and package.capacity is not None:
+            if package.booked_count >= package.capacity:
+                raise serializers.ValidationError({
+                    'package': f'Lo sentimos, este paquete ya no tiene cupos disponibles.'
+                })
 
         return attrs
 
